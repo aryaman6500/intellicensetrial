@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  uploads   Upload[]
+  requests  Request[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Upload {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  fileType    FileType
+  fileName    String
+  fileUrl     String
+  contentType String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  analysis    Analysis?
+  requests    Request[]
+}
+
+enum FileType {
+  IMAGE
+  ARTICLE
+  VIDEO
+}
+
+model Analysis {
+  id                String   @id @default(uuid())
+  uploadId          String   @unique
+  upload            Upload   @relation(fields: [uploadId], references: [id])
+  licensingInfo     String?  @db.Text
+  licensingSummary  String?  @db.Text
+  riskScore         Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Request {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  uploadId  String?
+  upload    Upload?  @relation(fields: [uploadId], references: [id])
+  question  String
+  answer    String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
