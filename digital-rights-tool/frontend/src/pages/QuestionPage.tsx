@@ -12,12 +12,6 @@ const questionSchema = z.object({
 
 type QuestionFormData = z.infer<typeof questionSchema>;
 
-interface Upload {
-  id: string;
-  fileName: string;
-  fileType: string;
-}
-
 interface Request {
   id: string;
   question: string;
@@ -35,7 +29,6 @@ export const QuestionPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const analysisId = searchParams.get('analysisId');
 
-  const [uploads, setUploads] = useState<Upload[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +44,7 @@ export const QuestionPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [uploadsResponse, requestsResponse] = await Promise.all([
-          api.get('/uploads'),
-          api.get('/requests'),
-        ]);
-        setUploads(uploadsResponse.data);
+        const requestsResponse = await api.get('/requests');
         setRequests(requestsResponse.data);
       } catch (error) {
         console.error('Failed to fetch data:', error);
