@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import ReactMarkdown from 'react-markdown';
 
@@ -21,277 +20,155 @@ interface Analysis {
 
 export const AnalysisPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [question, setQuestion] = useState<string>('');
 
   useEffect(() => {
-    // Redirect if not authenticated
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-
     const fetchAnalysis = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // First check if the upload exists
-        const uploadResponse = await api.get(`/upload/${id}`);
-        // @ts-ignore
-        const { upload } = uploadResponse.data;
-
-        // Check if analysis exists
-        try {
-          const analysisResponse = await api.get(`/analysis/${id}`);
-          setAnalysis(analysisResponse.data.analysis);
-        } catch (error) {
-          // If no analysis yet, create one
-          setIsAnalyzing(true);
-
-          try {
-            await api.post(`/analysis/${id}`, {});
-            // Poll for analysis every 2 seconds
-            const interval = setInterval(async () => {
-              try {
-                const response = await api.get(`/analysis/${id}`);
-                const data = response.data;
-
-                if (data.analysis) {
-                  setAnalysis(data.analysis);
-                  setIsAnalyzing(false);
-                  clearInterval(interval);
-                }
-              } catch (error) {
-                
-              }
-            }, 2000);
-
-            
-            setTimeout(() => {
-              clearInterval(interval);
-              if (isAnalyzing) {
-                setIsAnalyzing(false);
-                setError('Analysis is taking longer than expected. Please try refreshing the page.');
-              }
-            }, 60000);
-
-            return () => clearInterval(interval);
-          } catch (error) {
-            setIsAnalyzing(false);
-            setError('Failed to start analysis. Please try again.');
-          }
-        }
-      } catch (error: any) {
-        console.error('Error fetching analysis:', error);
-        setError(error.message || 'Failed to load analysis. Please try again.');
+        const response = await api.get(`/analysis/${id}`);
+        setAnalysis(response.data);
+      } catch (error) {
+        console.error('Failed to fetch analysis:', error);
+        setError('Failed to load analysis. Please try again later.');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchAnalysis();
-  }, [id, isAuthenticated, navigate]);
+    if (id) {
+      fetchAnalysis();
+    }
+  }, [id]);
 
   const handleAskQuestion = async () => {
-    if (!question.trim()) return;
-
-    try {
-      await api.post('/request', {
-        question,
-        uploadId: id
-      });
-
-      // Navigate to question page
-      navigate('/question');
-    } catch (error) {
-      console.error('Error asking question:', error);
-      setError('Failed to submit question. Please try again.');
-    }
+    navigate(`/question?analysisId=${id}`);
   };
 
-  // Get risk level label based on score
   const getRiskLevel = (score: number) => {
-    if (score < 25) return 'Low';
-    if (score < 50) return 'Moderate';
-    if (score < 75) return 'High';
-    return 'Very High';
+    if (score >= 80) return 'High';
+    if (score >= 50) return 'Medium';
+    return 'Low';
   };
 
-  // Get color class based on risk level
   const getRiskColorClass = (score: number) => {
-    if (score < 25) return 'bg-green-100 text-green-800';
-    if (score < 50) return 'bg-yellow-100 text-yellow-800';
-    if (score < 75) return 'bg-orange-100 text-orange-800';
-    return 'bg-red-100 text-red-800';
+    if (score >= 80) return 'text-red-600 bg-red-100';
+    if (score >= 50) return 'text-yellow-600 bg-yellow-100';
+    return 'text-green-600 bg-green-100';
   };
 
-  // Format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'short',
+      month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-  return (
-    <div className="container-custom">
-      <div className="mb-8">
-        <Link to="/dashboard" className="text-primary-600 hover:text-primary-500 flex items-center mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-          Back to Dashboard
-        </Link>
-        
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Content Analysis</h1>
-        {analysis && (
-          <p className="text-lg text-gray-600">
-            Analysis for {analysis.upload.fileName}
-          </p>
-        )}
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <svg className="animate-spin h-8 w-8 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </div>
-      ) : isAnalyzing ? (
-        <div className="card p-8 text-center">
-          <div className="mb-4">
-            <svg className="animate-spin h-12 w-12 text-primary-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Analyzing Your Content</h3>
-          <p className="text-gray-600 mb-4">
-            Our AI is reviewing your content for copyright and licensing information. This may take a minute or two.
-          </p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-            <div className="bg-primary-600 h-2.5 rounded-full animate-pulse w-3/4"></div>
-          </div>
-          <p className="text-sm text-gray-500">Please don't close this window</p>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
           {error}
         </div>
-      ) : analysis ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Analysis Column */}
-          <div className="lg:col-span-2">
-            <div className="card mb-8">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Licensing Analysis</h2>
-              </div>
-              <div className="p-6">
-                <div className="mb-8">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Summary</h3>
-                  <div className="text-gray-700 bg-gray-50 p-4 rounded border border-gray-200">
-                    <ReactMarkdown>{analysis.licensingSummary}</ReactMarkdown>
-                  </div>
-                </div>
+      </div>
+    );
+  }
 
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Detailed Analysis</h3>
-                  <div className="prose max-w-none text-gray-700 bg-gray-50 p-4 rounded border border-gray-200 whitespace-pre-line">
-                    <ReactMarkdown>{analysis.licensingInfo}</ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-            </div>
+  if (!analysis) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-600 px-4 py-3 rounded-lg">
+          Analysis not found
+        </div>
+      </div>
+    );
+  }
 
-            <div className="card">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Ask a Question</h2>
-              </div>
-              <div className="p-6">
-                <p className="text-gray-600 mb-4">
-                  Have a specific question about this content's licensing? Our AI can help answer it.
-                </p>
-                <div className="flex items-start space-x-4">
-                  <textarea
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    className="input h-24 resize-none"
-                    placeholder="e.g., Can I use this image on my commercial website?"
-                  ></textarea>
-                  <button
-                    onClick={handleAskQuestion}
-                    disabled={!question.trim()}
-                    className="btn btn-primary flex-shrink-0 mt-1"
-                  >
-                    Submit
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Analysis Results</h1>
+        <p className="text-gray-600">
+          Analysis completed on {formatDate(analysis.createdAt)}
+        </p>
+      </div>
 
-          {/* Sidebar */}
-          <div>
-            <div className="card mb-8">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Risk Assessment</h2>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-700">Risk Level:</span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskColorClass(analysis.riskScore)}`}>
-                    {getRiskLevel(analysis.riskScore)}
-                  </span>
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>Low Risk</span>
-                    <span>High Risk</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                    <div
-                      className="bg-primary-600 h-2.5 rounded-full"
-                      style={{ width: `${analysis.riskScore}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-600">
-                  This score represents the estimated risk of copyright or licensing issues based on our AI analysis.
-                </p>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Upload Info</h2>
-              </div>
-              <div className="p-6">
-                <p className="text-gray-600 mb-4">
-                  <strong>File Name:</strong> {analysis.upload.fileName}
-                </p>
-                <p className="text-gray-600 mb-4">
-                  <strong>File Type:</strong> {analysis.upload.fileType}
-                </p>
-                <p className="text-gray-600">
-                  <strong>Uploaded On:</strong> {formatDate(analysis.upload.createdAt)}
-                </p>
-              </div>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">File Information</h3>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Name:</span> {analysis.upload.fileName}
+            </p>
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Type:</span> {analysis.upload.fileType}
+            </p>
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Uploaded:</span> {formatDate(analysis.upload.createdAt)}
+            </p>
           </div>
         </div>
-      ) : null}
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Risk Assessment</h3>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Risk Level:</span>{' '}
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskColorClass(analysis.riskScore)}`}>
+                {getRiskLevel(analysis.riskScore)}
+              </span>
+            </p>
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Risk Score:</span> {analysis.riskScore}%
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Actions</h3>
+          <div className="space-y-2">
+            <button
+              onClick={handleAskQuestion}
+              className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Ask a Question
+            </button>
+            <Link
+              to="/upload"
+              className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Upload Another File
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Licensing Summary</h2>
+        <div className="prose max-w-none">
+          <ReactMarkdown>{analysis.licensingSummary}</ReactMarkdown>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Detailed Licensing Information</h2>
+        <div className="prose max-w-none">
+          <ReactMarkdown>{analysis.licensingInfo}</ReactMarkdown>
+        </div>
+      </div>
     </div>
   );
 };
