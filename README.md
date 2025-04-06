@@ -1,43 +1,90 @@
-# IntelliCense 
+# 🎯 IntelliCense
 
-**IntelLicense** is an AI-powered tool designed to scan digital content for potential copyright risks and help organizations ensure compliance with digital rights and licensing regulations. The system leverages Retrieval-Augmented Generation (RAG) models to provide real-time legal suggestions and precedents.
+**IntelliCense** is an AI-powered compliance tool that helps organizations scan and analyze digital content for potential copyright and licensing violations. Leveraging **Retrieval-Augmented Generation (RAG)** and the **Google Gemini API**, IntelliCense delivers real-time legal insights and actionable compliance suggestions based on legal precedents.
 
-## Features 🚀
-- 🧠 AI-powered content scanning for copyright infringement risks
-- 📜 Fetches legal precedents and suggests compliance actions
-- ⚙️ Built with **React**, **TypeScript** for frontend
-- 💾 Backend powered by **Prisma** and **PostgreSQL**
-- 🔐 Secure **JWT authentication**
+---
 
-## Tech Stack 💻
-- **Frontend**: React, TypeScript, Zod
-- **Backend**: Prisma, PostgreSQL
-- **Authentication**: JWT
-- **AI**: Google Gemini API, RAG models
+## 🔍 Key Features
 
-## Installation 🛠️
+- 🧠 **AI-Powered Scanning**: Detect potential copyright infringement risks in text, images, or videos.
+- 📚 **Legal Intelligence**: Retrieve legal precedents and receive recommended compliance actions.
+- 🛠️ **Modern Tech Stack**: Built with scalable and maintainable tools for both frontend and backend.
+- 🔐 **Secure by Design**: Uses JWT-based authentication to protect your data.
 
-### Clone the repository:
+---
+
+## 🧱 Tech Stack
+
+| Layer        | Technologies                             |
+|--------------|------------------------------------------|
+| **Frontend** | React, TypeScript, Zod                   |
+| **Backend**  | Node.js, Express, Prisma, PostgreSQL     |
+| **Auth**     | JSON Web Tokens (JWT)                    |
+| **AI/ML**    | Google Gemini API, RAG Models            |
+
+---
+
+## ⚙️ Installation
+
+### 1. Clone the repository
 ```bash
 git clone https://github.com/your-username/IntelLicense.git
-## Usage 📊
+cd IntelLicense
+2. Set up the backend
+Configure environment variables (e.g., GROQ_API_KEY, DB credentials)
 
-Once the app is up and running:
+Install dependencies:
 
-1. Go to `http://localhost:3000` (or the appropriate port if different).
-2. Upload your digital content (e.g., text, images, videos) for scanning.
-3. Receive compliance suggestions based on the scanned content and legal precedents.
+bash
+Copy
+Edit
+cd backend
+npm install
+Run database migrations:
 
-## Contributing 🤝
+bash
+Copy
+Edit
+npx prisma migrate dev
+Start the server:
 
-We welcome contributions to improve IntelLicense! If you'd like to contribute, please follow these steps:
+bash
+Copy
+Edit
+npm run dev
+3. Set up the frontend
+Install dependencies:
 
-1. 🍴 Fork the repository.
-2. 🌱 Create a new branch.
-3. 📝 Make your changes.
-4. 🚀 Open a pull request.
+bash
+Copy
+Edit
+cd frontend
+npm install
+Start the frontend:
 
-## License 📜
+bash
+Copy
+Edit
+npm run dev
+🚀 Usage
+Open your browser and go to http://localhost:3000
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Upload digital content (text, images, videos) to scan.
 
+Review AI-generated compliance suggestions and legal references.
+
+🤝 Contributing
+We welcome contributions from the community!
+
+🍴 Fork the repository
+
+🌱 Create a new feature branch (git checkout -b feature/your-feature)
+
+🛠 Make your changes
+
+✅ Test thoroughly
+
+🚀 Submit a pull request
+
+📄 License
+This project is licensed under the MIT License.
