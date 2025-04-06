@@ -2,7 +2,7 @@
 
 **IntelliCense** is an AI-powered compliance tool that helps organizations scan and analyze digital content for potential copyright and licensing violations. Leveraging **Retrieval-Augmented Generation (RAG)** and the **Google Gemini API**, IntelliCense delivers real-time legal insights and actionable compliance suggestions based on legal precedents.
 
----
+--
 
 ## 🔍 Key Features
 
@@ -11,9 +11,9 @@
 - 🛠️ **Modern Tech Stack**: Built with scalable and maintainable tools for both frontend and backend.
 - 🔐 **Secure by Design**: Uses JWT-based authentication to protect your data.
 
----
+--
 
-## 🧱 Tech Stack
+##🧱 Tech Stack
 
 | Layer        | Technologies                             |
 |--------------|------------------------------------------|
@@ -22,7 +22,7 @@
 | **Auth**     | JSON Web Tokens (JWT)                    |
 | **AI/ML**    | Google Gemini API, RAG Models            |
 
----
+--
 
 ## ⚙️ Installation
 
